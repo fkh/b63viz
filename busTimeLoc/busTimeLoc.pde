@@ -11,20 +11,29 @@ String busTimeUrl = "http://bustime.mta.info/api/siri/vehicle-monitoring.xml";
 String busTimeKey = "7be28507-72fe-45ba-a312-d1e6d927b644";
 String busTimeOperatorRef = "MTA%20NYCT";
 
-
 color bgCol, dotCol;
 
 String busTimeApiCall = "vehicle-monitoring.xml";
 
-float  minX, maxX, minY, maxY ;
+ //float  minX, maxX, minY, maxY ;
+
+// get the bounds
+float minX = -74.04;
+float  maxX = -73.91;
+float minY = 40.58;
+float  maxY = 40.70;
+
+boolean firstRun = true;
+
 
 //set up the bus array
 
-Bus[] buses;
+Bus[] buses = new Bus[30];
+
 
 void setup() {
 
-  size(1000, 1000, P2D);
+  size(700, 700, P2D);
   hint(DISABLE_OPENGL_2X_SMOOTH);  
 
   colorMode(HSB, 100);
@@ -33,17 +42,17 @@ void setup() {
   noStroke();
 
   busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&OperatorRef=" + busTimeOperatorRef + "&VehicleMonitoringDetailLevel=calls";
-  
+
   Date d = new Date();
   long current = d.getTime()/1000; 
 
   String movieName = "b63_" + current + ".mov";
-  
+
   print(movieName);
-  
+
   mm = new MovieMaker(this, width, height, movieName,
   25, MovieMaker.RAW, MovieMaker.HIGH);
-  
+
   loop();
 }
 
@@ -57,18 +66,12 @@ void draw() {
   xml = new XMLElement(this, busTimeApiCall);
 
   XMLElement[] allBuses = xml.getChildren("ServiceDelivery/VehicleMonitoringDelivery/VehicleActivity");
-  
-  print(xml);
+
+  //print(xml);
 
   delay(7000);   
 
-  buses = new Bus[allBuses.length];
   println("Got " + allBuses.length + " buses");
-
-  float[] busX = new float[allBuses.length];
-  float[] busY = new float[allBuses.length];
-  String[] busId = new String[allBuses.length];
-
 
   for (int i = 0; i < allBuses.length ; i++) {
 
@@ -79,43 +82,30 @@ void draw() {
     Float busLocLongitude = float(thisBusLongitude.getContent());
     Float busLocLatitude = float(thisBusLatitude.getContent());
 
-    // buses[i] = new Bus(busLocLongitude, busLocLatitude, busId);
-
-    busX[i] = busLocLongitude;
-    busY[i] = busLocLatitude;
-
-    println(thisBusId);
+    String busIdOutput;
 
     if (thisBusId == null ) {  
-      busId[i] = "Not a B63";
+      busIdOutput = "Not a B63";
     } 
     else {
-      busId[i] = thisBusId.getContent();
+      busIdOutput = thisBusId.getContent();
+    }
+
+    if (firstRun) {   
+
+      buses[i] = new Bus(busLocLatitude, busLocLongitude, busIdOutput); 
+      buses[i].drawBus();
+    } 
+    else {
+      
+      buses[i].update(busLocLatitude, busLocLongitude);
+
     }
   }
 
-  // get the bounds
+  firstRun = false;
 
-
-  minX = min(busX);
-  maxX = max(busX);
-  minY = min(busY);
-  maxY = max(busY);
-
-  minX = -74.04;
-  maxX = -73.91;
-  minY = 40.58;
-  maxY = 40.70;
-
-
-  // loop through all buses
-  for (int i = 0; i < busX.length; i++) {
-    fill(map(i,0,busX.length,0,100),50,90,100);
-    ellipse(map(busX[i],minX,maxX,0,width), map(busY[i],maxY,minY,0,height),5,5);
-  }
-
-  println( minX + " " + maxX  + " " + minY  + " " + maxY);
-   mm.addFrame(); 
+  mm.addFrame();
 }
 
 
@@ -129,13 +119,53 @@ void keyPressed() {
 class Bus {
   float latitude;
   float longitude;
+  float oldLatitude;
+  float oldLongitude;
+  float busX;
+  float busY;
+  float oldBusX;
+  float oldBusY;
   String id;
-
+  color busColor;
 
   Bus(float bx, float by, String bid) {
     latitude = bx;
     longitude = by;
+    oldLatitude = bx;
+    oldLongitude = by;
     id = bid;
+    busColor = color(int(random(0,100)),50,90,100);
+  }
+
+  void drawBus() {
+
+    stroke(50,50,50,50);
+    noStroke();
+    fill(busColor);
+    ellipse(map(latitude,minX,maxX,0,width), map(longitude,maxY,minY,0,height),5,5);
+  }
+
+  void update(float newLat, float newLon) {
+   
+    float busX = map(newLon, minX, maxX, 0, 500);
+   float busY = map(newLat,maxY,minY,0,500);
+
+    stroke(busColor);
+    
+    fill(busColor);
+    if (oldBusX > 0) {
+      line(oldBusX,oldBusY,busX,busY);
+    }
+    
+    noStroke();
+   //   println( minX + " " + maxX  + " " + minY  + " " + maxY);
+   // println(busX + " " + busY + ", " + newLat + " " + newLon);
+    ellipse(busX, busY, 3, 3);
+
+    oldBusX = busX;
+    oldBusY = busY;
+    latitude = newLat;
+    longitude = newLon;
   }
 }
 
