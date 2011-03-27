@@ -13,13 +13,17 @@ String busTimeMonitoringRef = "308214";
 
 String busTimeApiCall = "stop-monitoring.xml";
 
+// radar graphics stuff
+RadarGUI radar;
+Sweep sweepArm;
+
 
 //font stuff
 PFont basicFont;
 
 // keeping track of time
 long current;
-int tickerDelay = 5000; //fetch the xml this often
+int tickerDelay = 10000; //fetch the xml this often
 long busTicker; //tracks when to fetch the xml
 int step = 0;
 int pulse;
@@ -28,12 +32,12 @@ int pulse;
 ArrayList slices;
 
 //rotations
-// complete circle in 20 mins... 360 degrees / (20 mins * 60 secs / 5 second step)
+// complete circle in 20 mins... 360 degrees / (20 mins * 60 secs / 10 second step)
 int rotationSteps = (30 * 60 / (tickerDelay / 1000));
 int rotationIncrement = 360/rotationSteps;
 
 //how far are we going to look?
-int myopicDistance = 6000;
+int myopicDistance = 3000;
 
 // how long is our radar sweep?
 int radarSweepLength;
@@ -41,14 +45,14 @@ int radarSweepLength;
 void setup() {
 
   size(700, 700);
- // hint(DISABLE_OPENGL_2X_SMOOTH);  
+  // hint(DISABLE_OPENGL_2X_SMOOTH);  
 
   colorMode(HSB, 100);
   background(0,0,0,100);
 
   noStroke();
 
- busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&MonitoringRef=" + busTimeMonitoringRef + "&OperatorRef=" + busTimeOperatorRef;
+  busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&MonitoringRef=" + busTimeMonitoringRef + "&OperatorRef=" + busTimeOperatorRef;
 
   //get a timestamp 
   Date d = new Date();
@@ -56,7 +60,7 @@ void setup() {
 
   //set up the bus list
   slices = new ArrayList();
-//  slices.add(new Slice(0, "foo", 0.1));
+  //  slices.add(new Slice(0, "foo", 0.1));
 
   //font stuff
   basicFont = loadFont("Monospaced-12.vlw");
@@ -66,9 +70,11 @@ void setup() {
   // drawing stuff
   rectMode(CENTER);
   smooth();
-  
+
   // graphical
   radarSweepLength = (height/2) - 40;
+  radar = new RadarGUI(500);
+  sweepArm = new Sweep();
 }
 
 
@@ -78,28 +84,16 @@ void draw() {
   noStroke();
   fill(0);
   rect(0,0,width*2,height*2);
-  
-  
-  //radar graphics
-  noFill();
-  stroke(15);
 
-  line(width/2,0,width/2,height/2);
-  ellipse(width/2,height/2, 10,10);
-  ellipse(width/2,height/2, width-50,height-50);
-
-   stroke(45);
-  ellipse(width/2,(height/2 - radarSweepLength), 10,10);
-
-
-
+  //draw the UI
+  radar.drawGUI();
 
   if (busTicker + tickerDelay < millis()) { 
     step++;
     fetchBusInfo();
     busTicker = millis(); 
-    
-    // get the latest locations
+
+    // report the tracked buses
     for (int j = 0; j < slices.size(); j++) {
 
       Slice currentSlice = (Slice) slices.get(j);
@@ -111,6 +105,7 @@ void draw() {
   }
 
   pushMatrix();
+
   translate(width/2, height/2);
 
   boolean showLabel = false;
@@ -119,33 +114,41 @@ void draw() {
   for (int k = 0; k <= step; k++) {
 
     pushMatrix();
-    
+
     Float rotateDegrees = float(rotationIncrement * (step - k) * -1);
-   
+
     rotate(radians(rotateDegrees));
+
+    if (k == 0) { // draw the time line
+
+      sweepArm.drawSweep();
+    }
 
     // draw the bus locations 
     for (int j = 0; j < slices.size(); j++) {
 
       Slice currentSlice = (Slice) slices.get(j);
+
       if (currentSlice.slice() == k) {
-        
+
         if (k == step) {
           showLabel = true;
-        } else {
-        showLabel = false;
+        } 
+        else {
+          showLabel = false;
         }
 
         currentSlice.drawBus(showLabel);
-      
-      };
+      }
     }
 
     popMatrix();
   }
 
   popMatrix();
-  
+
   loop();
+
+  //saveFrame(current + ".png");
 }
 
