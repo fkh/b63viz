@@ -1,9 +1,9 @@
 
 // bus time
 
-import processing.video.*;
+//import processing.video.*;
 
-MovieMaker mm;
+//MovieMaker mm;
 
 XMLElement xml;
 
@@ -15,7 +15,7 @@ color bgCol, dotCol;
 
 String busTimeApiCall = "vehicle-monitoring.xml";
 
- //float  minX, maxX, minY, maxY ;
+//float  minX, maxX, minY, maxY ;
 
 // get the bounds
 float minX = -74.04;
@@ -24,6 +24,8 @@ float minY = 40.58;
 float  maxY = 40.70;
 
 boolean firstRun = true;
+
+long current;
 
 
 //set up the bus array
@@ -44,7 +46,7 @@ void setup() {
   busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&OperatorRef=" + busTimeOperatorRef + "&VehicleMonitoringDetailLevel=calls";
 
   Date d = new Date();
-  long current = d.getTime()/1000; 
+  current = d.getTime()/1000; 
 
   String movieName = "b63_" + current + ".mov";
 
@@ -59,17 +61,19 @@ void setup() {
 
 void draw() {
 
-  fill(0,0,0,5);
+  fill(0,0,0,3);
   rect(0,0,width,height);
 
   print("Accessing " + busTimeApiCall);
+  
   xml = new XMLElement(this, busTimeApiCall);
 
   XMLElement[] allBuses = xml.getChildren("ServiceDelivery/VehicleMonitoringDelivery/VehicleActivity");
 
+
   //print(xml);
 
-  delay(7000);   
+  delay(10000);   
 
   println("Got " + allBuses.length + " buses");
 
@@ -97,15 +101,16 @@ void draw() {
       buses[i].drawBus();
     } 
     else {
-      
-      buses[i].update(busLocLatitude, busLocLongitude);
 
+      buses[i].update(busLocLatitude, busLocLongitude);
     }
   }
 
   firstRun = false;
 
   mm.addFrame();
+  
+  saveFrame(current + "-####.png"); 
 }
 
 
@@ -146,21 +151,19 @@ class Bus {
   }
 
   void update(float newLat, float newLon) {
-   
-    float busX = map(newLon, minX, maxX, 0, 500);
-   float busY = map(newLat,maxY,minY,0,500);
+
+    float busX = map(newLon, minX, maxX, 0, width);
+    float busY = map(newLat,maxY,minY,0, height);
 
     stroke(busColor);
-    
+
     fill(busColor);
     if (oldBusX > 0) {
       line(oldBusX,oldBusY,busX,busY);
     }
-    
+
     noStroke();
-   //   println( minX + " " + maxX  + " " + minY  + " " + maxY);
-   // println(busX + " " + busY + ", " + newLat + " " + newLon);
-    ellipse(busX, busY, 3, 3);
+    ellipse(busX, busY, 5, 5);
 
     oldBusX = busX;
     oldBusY = busY;
