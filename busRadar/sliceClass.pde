@@ -1,6 +1,4 @@
 int labelShow;
-long labelPulse;
-String dotLabel;
 
 class Slice {
   int sliceId;
@@ -8,6 +6,8 @@ class Slice {
   float busDistance;
   boolean isFresh;
   int stopsAway;
+  int labelTicker;
+  String dotLabel;
 
   Slice(int sid, String bid, float bdis, boolean iF, int sA) {
     sliceId = sid;
@@ -22,11 +22,19 @@ class Slice {
 
     translate(0, -1 * radarSweepLength);
 
-    int dotSize = 4;
+    float dotSize = 4;
 
-    if (isFresh) {
-      dotSize = 8;
+    int dotMultiplier = 100 * (step - sliceId)/rotationSteps;
+
+
+    if ((sliceId + rotationSteps) < step) { // more than one rotation
+      dotSize = 2;
+    } 
+    else { 
+      dotSize = map(100 - dotMultiplier, 0, 100, 2, 6); // less than one rotation
     }
+
+
 
     float distanceToDraw;
 
@@ -39,7 +47,7 @@ class Slice {
       distanceToDraw = norm(busDistance,float(0),float(myopicDistance)) * radarSweepLength;
     }
 
-    if (stopsAway > 10) {
+    if (stopsAway > 8) {
       stroke(50);
       noFill();
     } 
@@ -52,27 +60,26 @@ class Slice {
     fill(30,90,50);
 
     if (drawLabel) {
-      if (labelPulse < millis()) {
-       labelShow++;
-       if (labelShow > 2) {
-         labelShow = 0; 
-       }
-      
-      switch (labelShow) {
-      case 0:
-        dotLabel = busId;
-        break;
-      case 1:
-        dotLabel = stopsAway + " stops away";
-        break;
-      case 2:
-      dotLabel = int(busDistance) + " meters away";
-        break;
+      if (labelTicker < millis()) {
+        labelShow++;
+        if (labelShow > 2) {
+          labelShow = 0;
+        }
+
+        switch (labelShow) {
+        case 0:
+          dotLabel = busId;
+          break;
+        case 1:
+          dotLabel = stopsAway + " stops away";
+          break;
+        case 2:
+          dotLabel = int(busDistance) + " meters away";
+          break;
+        }
+
+        labelTicker = millis() + 2500 + int(random(0,2000));
       }
-           
-     labelPulse = millis() + 2500;
-     
-    }
       text(dotLabel, 10, distanceToDraw + 5);
     }
 
