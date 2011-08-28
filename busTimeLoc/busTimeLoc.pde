@@ -43,15 +43,41 @@ void setup() {
 
   noStroke();
 
-  busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&OperatorRef=" + busTimeOperatorRef + "&VehicleMonitoringDetailLevel=calls";  
+  busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&OperatorRef=" + busTimeOperatorRef + "&VehicleMonitoringDetailLevel=calls";
+
+  //get a timestamp for these pics
+  Date d = new Date();
+  current = d.getTime()/1000; 
+  
+  
+  // font to write the date/time onto the pic
+  PFont font;
+  font = loadFont("Monospaced-48.vlw"); 
+  textFont(font); 
 
   loop();
 }
 
 void draw() {
 
+  // refresh the background with a transparent black box
   fill(0,0,0,3);
   rect(0,0,width,height);
+  
+  // prep the timestamp
+  fill(0);
+  rect(30,20,150,50);
+  fill(100);
+  String mins;
+  if (minute() < 10) {
+    mins = "0" + minute();
+  } else {
+    mins = minute() + "";  
+  }
+  
+  // write the timestamp
+  String timerecord = hour() + ":" + mins;
+  text(timerecord, 30, 60);
 
   print("Accessing " + busTimeApiCall);
   
@@ -59,9 +85,13 @@ void draw() {
 
   XMLElement[] allBuses = xml.getChildren("ServiceDelivery/VehicleMonitoringDelivery/VehicleActivity");
 
-  delay(1000);   
 
-  println("Got " + allBuses.length + " buses");
+  //print(xml);
+
+  // poll every minute
+  delay(60000);   
+
+  //println("Got " + allBuses.length + " buses");
 
   for (int i = 0; i < allBuses.length ; i++) {
 
