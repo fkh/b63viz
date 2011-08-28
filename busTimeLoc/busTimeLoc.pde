@@ -30,12 +30,12 @@ long current;
 
 //set up the bus array
 
-Bus[] buses = new Bus[30];
+Bus[] buses = new Bus[100];
 
 
 void setup() {
 
-  size(700, 700, P2D);
+  size(1200, 1200, P2D);
   hint(DISABLE_OPENGL_2X_SMOOTH);  
 
   colorMode(HSB, 100);
@@ -43,21 +43,10 @@ void setup() {
 
   noStroke();
 
-  busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&OperatorRef=" + busTimeOperatorRef + "&VehicleMonitoringDetailLevel=calls";
-
-  Date d = new Date();
-  current = d.getTime()/1000; 
-
-  String movieName = "b63_" + current + ".mov";
-
-  print(movieName);
-
-  mm = new MovieMaker(this, width, height, movieName,
-  25, MovieMaker.RAW, MovieMaker.HIGH);
+  busTimeApiCall = busTimeUrl + "?key=" + busTimeKey + "&OperatorRef=" + busTimeOperatorRef + "&VehicleMonitoringDetailLevel=calls";  
 
   loop();
 }
-
 
 void draw() {
 
@@ -70,10 +59,7 @@ void draw() {
 
   XMLElement[] allBuses = xml.getChildren("ServiceDelivery/VehicleMonitoringDelivery/VehicleActivity");
 
-
-  //print(xml);
-
-  delay(10000);   
+  delay(1000);   
 
   println("Got " + allBuses.length + " buses");
 
@@ -108,17 +94,7 @@ void draw() {
 
   firstRun = false;
 
-  mm.addFrame();
-  
   saveFrame(current + "-####.png"); 
-}
-
-
-void keyPressed() {
-  if (key == ' ') {
-    mm.finish();  // Finish the movie if space bar is pressed!
-    println("Closed movie!");
-  }
 }
 
 class Bus {
